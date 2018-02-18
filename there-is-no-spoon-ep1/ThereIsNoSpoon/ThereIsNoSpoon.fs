@@ -1,6 +1,8 @@
 (* Don't let the machines win. You are humanity's last hope... *)
 module ThereIsNoSpoon
 
+open System;
+
 type Point = { x: int; y: int; }
 type Cell = Cell of Point option
 type GameGrid = Cell[][]
@@ -22,30 +24,33 @@ let getCell (grid: GameGrid) x y =
     | (a, b) when grid.[b].[a] = Cell(None) -> None
     | (a, b) -> Some grid.[b].[a]
 
+let rec getNeighbour (grid: GameGrid) x' y' next =
+    let (x, y) = next x' y'
+    match (x, y) with
+    | (_, y) when y >= grid.Length -> { x = -1; y= -1; }
+    | (x, y) when x >= grid.[y].Length -> { x = -1; y= -1; }
+    | (x, y) -> 
+        match grid.[y].[x] with
+        | Cell(Some(p)) -> p
+        | Cell(None) -> getNeighbour grid x y next
+
+let getRNeighbour grid x y =
+    getNeighbour grid x y (fun x y -> (x + 1, y))
+
+let getBNeighbour grid x y =
+    getNeighbour grid x y (fun x y -> (x, y + 1))
+
 let getPointWithNeighbours grid x y =
-    let getCell' = getCell grid
-    let getCellPoint x' y' = getCell' x' y' |> cellToPoint
-    match getCell' x y with
+    match getCell grid x y with
     | None -> None
     | Some point -> Some {
         self = Some point |> cellToPoint;
-        right = getCellPoint (x + 1) y;
-        bottom = getCellPoint x (y + 1);
+        right = getRNeighbour grid x y;
+        bottom = getBNeighbour grid x y;
     }
 
-let rec findPoints grid =
+let rec findPoints (grid: GameGrid) =
     let rec findPoints' x y (v: Map<(int * int), PointWithNeighbours>) =
-        if v.ContainsKey (x,y) then
-            v
-        else
-            match getPointWithNeighbours grid x y with
-            | None -> v
-            | Some p ->
-                v.Add ((x,y), p) |>
-                findPoints' (x + 1) y |>
-                findPoints' x (y + 1)
-
-    let rec findPoints'' x y (v: Map<(int * int), PointWithNeighbours>) =
         if v.ContainsKey (x,y) then
             v
         else
@@ -53,11 +58,14 @@ let rec findPoints grid =
         | (_, y) when y >= grid.Length -> v
         | (x, y) when x >= grid.[y].Length -> v
         | (x, y) ->
-            v |>
-            findPoints' x y |>
-            findPoints'' (x + 1) y |>
-            findPoints'' x (y + 1)
+            let v' =
+                match getPointWithNeighbours grid x y with
+                | None -> v 
+                | Some p -> v.Add ((x,y), p)
+            v' |> 
+            findPoints' (x + 1) y |>
+            findPoints' x (y + 1)
 
-    findPoints'' 0 0 Map.empty |>
+    findPoints' 0 0 Map.empty |>
     Map.toArray |>
     Array.map (fun (_, v) -> v)

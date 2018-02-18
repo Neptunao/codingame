@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ThereIsNoSpoon.fs" />
+    <Compile Include="Helper.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
