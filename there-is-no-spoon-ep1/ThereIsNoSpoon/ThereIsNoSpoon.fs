@@ -4,7 +4,7 @@ module ThereIsNoSpoon
 type Point = { x: int; y: int; }
 type Cell = Cell of Point option
 type GameGrid = Cell[][]
-type PointWithNeighbours = { self: Point; right: Point; bottom: Point  } 
+type PointWithNeighbours = { self: Point; right: Point; bottom: Point  }
 
 let cellToStr cell =
     cell.x.ToString() + " " +  cell.y.ToString()
@@ -17,44 +17,44 @@ let cellToPoint cell =
 
 let getCell (grid: GameGrid) x y =
     match (x, y) with
-    | (a, _) when a >= grid.Length -> None
-    | (a, b) when b >= grid.[a].Length -> None
-    | (a, b) when grid.[a].[b] = Cell(None) -> None 
-    | (a, b) -> Some grid.[a].[b]
+    | (_, b) when b >= grid.Length -> None
+    | (a, b) when a >= grid.[b].Length -> None
+    | (a, b) when grid.[b].[a] = Cell(None) -> None
+    | (a, b) -> Some grid.[b].[a]
 
 let getPointWithNeighbours grid x y =
     let getCell' = getCell grid
     let getCellPoint x' y' = getCell' x' y' |> cellToPoint
     match getCell' x y with
     | None -> None
-    | Some point -> Some { 
-        self = Some point |> cellToPoint; 
+    | Some point -> Some {
+        self = Some point |> cellToPoint;
         right = getCellPoint (x + 1) y;
-        bottom = getCellPoint x (y + 1); 
+        bottom = getCellPoint x (y + 1);
     }
 
 let rec findPoints grid =
     let rec findPoints' x y (v: Map<(int * int), PointWithNeighbours>) =
-        if v.ContainsKey (x,y) then 
-            v 
+        if v.ContainsKey (x,y) then
+            v
         else
             match getPointWithNeighbours grid x y with
             | None -> v
-            | Some p -> 
+            | Some p ->
                 v.Add ((x,y), p) |>
                 findPoints' (x + 1) y |>
                 findPoints' x (y + 1)
 
     let rec findPoints'' x y (v: Map<(int * int), PointWithNeighbours>) =
-        if v.ContainsKey (x,y) then 
+        if v.ContainsKey (x,y) then
             v
         else
         match (x, y) with
-        | (x, _) when x >= grid.Length -> v
-        | (x, y) when y >= grid.[x].Length -> v
+        | (_, y) when y >= grid.Length -> v
+        | (x, y) when x >= grid.[y].Length -> v
         | (x, y) ->
             v |>
-            findPoints' x y |> 
+            findPoints' x y |>
             findPoints'' (x + 1) y |>
             findPoints'' x (y + 1)
 
